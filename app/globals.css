@@ -30,9 +30,9 @@ body {
 
 @keyframes bounce-slow {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); } /* smaller bounce */
+  50% { transform: translateY(-4px); } 
 }
 
 .animate-bounce-slow {
-  animation: bounce-slow 3s ease-in-out infinite; /* slower, smoother bounce */
+  animation: bounce-slow 3s ease-in-out infinite; 
 }
