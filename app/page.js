@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Coins, Sparkles, Trophy, Target, Users } from "lucide-react";
+import FeatureGrid from "@/components/FeatureGrid";
 
 export default function Home() {
   return (
@@ -12,14 +13,14 @@ export default function Home() {
             height={200}
             src={"/images/hero-chest.jpeg"}
             alt="SaveQuest Treasure"
-            className="w-full h-32 sm:h-40 md:h-48 object-cover rounded-2xl"
+            className="w-full h-32 sm:h-40 md:h-48 object-cover rounded-2xl animate-bounce-slow"
           />
           <div className="absolute -top-2 -right-2">
             <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-400 animate-pulse" />
           </div>
         </div>
 
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-green-600 to-green-400 bg-clip-text text-transparent">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-green-600 to-green-400 bg-clip-text text-transparent animate-float">
           SaveQuest
         </h1>
 
@@ -54,27 +55,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="px-6 pb-8 w-full">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-sm sm:max-w-md md:max-w-lg mx-auto">
-          <div className="p-4 text-center flex flex-col items-center justify-center bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300">
-            <Target className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 mb-2" />
-            <h3 className="font-semibold text-sm sm:text-base mb-1">Goals</h3>
-            <p className="text-xs sm:text-sm text-gray-500">Set & track savings</p>
-          </div>
-
-          <div className="p-4 text-center flex flex-col items-center justify-center bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300">
-            <Trophy className="w-6 h-6 sm:w-8 sm:h-8 text-[#f6ad1c] mb-2" />
-            <h3 className="font-semibold text-sm sm:text-base mb-1">Badges</h3>
-            <p className="text-xs sm:text-sm text-gray-500">Unlock achievements</p>
-          </div>
-
-          <div className="p-4 text-center flex flex-col items-center justify-center bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300">
-            <Users className="w-6 h-6 sm:w-8 sm:h-8 text-purple-700 mb-2" />
-            <h3 className="font-semibold text-sm sm:text-base mb-1">Challenges</h3>
-            <p className="text-xs sm:text-sm text-gray-500">Compete with friends</p>
-          </div>
-        </div>
-      </div>
+      <FeatureGrid />
     </div>
   );
 }
