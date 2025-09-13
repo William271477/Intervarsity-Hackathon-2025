@@ -22,17 +22,17 @@ export default function Home() {
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-green-600 to-green-400 bg-clip-text text-transparent animate-float" style={{ animationDelay: "0.15s" }}>
           SaveQuest
         </h1>
-        <p className="text-sm sm:text-lg md:text-xl mt-4 sm:mt-6 text-gray-500 mb-6 sm:mb-8 max-w-[300px] sm:max-w-[400px]">
+        <p className="text-sm sm:text-lg md:text-xl mt-4 sm:mt-6 text-gray-500 mb-5 sm:mb-8 max-w-[300px] sm:max-w-[400px]">
           Turn saving money into an epic adventure! Level up your finances and unlock rewards.
         </p>
         <div className="flex flex-col gap-3 w-full max-w-xs sm:max-w-sm">
           <Link href="/dashboard">
-            <button className="bg-gradient-to-r from-[#3b82f6] to-[#2563eb] text-white font-semibold shadow w-full h-10 sm:h-12 flex items-center justify-center gap-3 sm:gap-4 text-sm sm:text-lg py-2 sm:py-3 rounded-xl transform transition-transform duration-200 hover:scale-105 cursor-pointer">
+            <button className="bg-gradient-to-r from-[#3b82f6] to-[#2563eb] text-white font-semibold shadow-xl w-full h-10 sm:h-12 flex items-center justify-center gap-3 sm:gap-4 text-sm sm:text-lg py-2 sm:py-3 rounded-xl transform transition-transform duration-200 hover:scale-105 cursor-pointer">
               <Trophy className="w-4 h-4 sm:w-5 sm:h-5" />
               Start Your Quest
             </button>
           </Link>
-          <div className="flex flex-wrap justify-center gap-3 text-xs sm:text-sm">
+          <div className="flex flex-wrap justify-center gap-3 mt-1 text-xs sm:text-sm">
             <div className="flex items-center gap-1">
               <Coins className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400" />
               <span className="text-gray-500">Save Money</span>
