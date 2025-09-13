@@ -1,7 +1,7 @@
 "use client";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Home, Target, Award, Users, Scroll } from "lucide-react"; // icons
+import { Home, Target, Award, Users, Scroll } from "lucide-react";
 
 const navItems = [
   { name: "Home", href: "/dashboard", icon: Home },

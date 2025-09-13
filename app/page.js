@@ -58,19 +58,19 @@ export default function Home() {
           <div className=" p-4 text-center flex flex-col items-center justify-center  bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300">
             <Target className="w-8 h-8 text-green-600 mx-auto mb-2" />
             <h3 className="font-semibold text-sm mb-1">Goals</h3>
-            <p className="text-xs text-muted-foreground">Set & track savings</p>
+            <p className="text-xs text-gray-500">Set & track savings</p>
           </div>
           
           <div className=" p-4 text-center flex flex-col items-center justify-center  bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300">
             <Trophy className="w-8 h-8 text-[#f6ad1c] mx-auto mb-2" />
             <h3 className="font-semibold text-sm mb-1">Badges</h3>
-            <p className="text-xs text-muted-foreground">Unlock achievements</p>
+            <p className="text-xs text-gray-500">Unlock achievements</p>
           </div>
           
           <div className=" p-4 text-center flex flex-col items-center justify-center  bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300">
             <Users className="w-8 h-8 text-purple-700 mx-auto mb-2" />
             <h3 className="font-semibold text-sm mb-1">Challenges</h3>
-            <p className="text-xs text-muted-foreground">Compete with friends</p>
+            <p className="text-xs text-gray-500">Compete with friends</p>
           </div>
         </div>
       </div>
