@@ -1,99 +1,102 @@
+
 "use client";
 import React, { useState, useEffect } from "react";
 import { db } from "@/lib/firebaseConfig";
 import { useUser } from "@/components/UserProvider";
-import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, arrayUnion } from "firebase/firestore";
 import toast from "react-hot-toast";
 
 export default function LessonsPage() {
-  const { user, loading } = useUser();
-  const [lessons, setLessons] = useState([]);
-  const [current, setCurrent] = useState(0);
-  const [completed, setCompleted] = useState([]);
-  const [selectedOption, setSelectedOption] = useState(null);
-  const [showResult, setShowResult] = useState(false);
-  const [correct, setCorrect] = useState(false);
+	const { user, loading, profile } = useUser();
+	const [lessons, setLessons] = useState([]);
+	const [selected, setSelected] = useState(null);
+	const [answer, setAnswer] = useState("");
+	const [submitting, setSubmitting] = useState(false);
+	const [completed, setCompleted] = useState([]);
 
-  useEffect(() => {
-    if (!user) return;
-    const fetchLessons = async () => {
-      const snap = await getDocs(collection(db, "lessons"));
-      setLessons(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      // Optionally, fetch user's completed lessons from profile
-      // setCompleted(...)
-    };
-    fetchLessons();
-  }, [user]);
+	useEffect(() => {
+		const fetchLessons = async () => {
+			const snap = await getDocs(collection(db, "lessons"));
+			setLessons(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+		};
+		fetchLessons();
+	}, []);
 
-  if (loading) return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
-  if (!user) return <div className="flex justify-center items-center min-h-screen">Please log in to access lessons.</div>;
-  if (lessons.length === 0) return <div className="flex justify-center items-center min-h-screen">No lessons available yet.</div>;
+	useEffect(() => {
+		if (profile) setCompleted(profile.completedLessons || []);
+	}, [profile]);
 
-  const lesson = lessons[current];
-  const isCompleted = completed.includes(lesson.id);
+	const handleQuiz = async (e) => {
+		e.preventDefault();
+		if (!selected || !answer) return;
+		setSubmitting(true);
+		const correct = selected.quiz[0].answer === answer;
+		if (correct) {
+			try {
+				// Award XP and mark lesson complete
+				const userRef = doc(db, "users", user.uid);
+				await updateDoc(userRef, {
+					xp: (profile?.xp || 0) + selected.xpReward,
+					completedLessons: arrayUnion(selected.id),
+				});
+				toast.success("Correct! +" + selected.xpReward + " XP");
+				setCompleted([...completed, selected.id]);
+			} catch {
+				toast.error("Could not update progress");
+			}
+		} else {
+			toast.error("Incorrect. Try again!");
+		}
+		setSubmitting(false);
+	};
 
-  const handleAnswer = (idx) => {
-    setSelectedOption(idx);
-    setShowResult(true);
-    setCorrect(idx === lesson.quiz[0].answer);
-  };
+	if (loading) return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
 
-  const handleNext = async () => {
-    setShowResult(false);
-    setSelectedOption(null);
-    setCorrect(false);
-    setCompleted([...completed, lesson.id]);
-    // Award XP and mark lesson as completed in Firestore
-    try {
-      const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, {
-        xp: (user.xp || 0) + (lesson.xpReward || 10),
-        badges: user.badges || [], // Optionally award badge
-      });
-      toast.success(`+${lesson.xpReward || 10} XP!`);
-    } catch (err) {
-      toast.error("Failed to update XP");
-    }
-    if (current < lessons.length - 1) {
-      setCurrent(current + 1);
-    }
-  };
-
-  return (
-    <div className="min-h-screen flex flex-col items-center py-8 px-2 sm:px-6 lg:px-8 bg-gradient-to-br from-yellow-50 via-blue-50 to-purple-50">
-      <h1 className="text-3xl font-bold mb-6">Financial Literacy Lessons</h1>
-      <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-xl flex flex-col gap-4">
-        <div className="font-semibold text-lg mb-2">Lesson {current + 1}: {lesson.title}</div>
-        <div className="mb-4">{lesson.content}</div>
-        <div className="font-semibold mb-2">Quiz:</div>
-        {lesson.quiz[0] && (
-          <div className="flex flex-col gap-2">
-            <div>{lesson.quiz[0].question}</div>
-            {lesson.quiz[0].options.map((opt, idx) => (
-              <button
-                key={idx}
-                className={`btn w-full ${selectedOption === idx ? (correct ? "btn-success" : "btn-error") : "btn-outline"}`}
-                onClick={() => !showResult && handleAnswer(idx)}
-                disabled={showResult}
-              >
-                {opt}
-              </button>
-            ))}
-          </div>
-        )}
-        {showResult && (
-          <div className={`mt-2 font-bold ${correct ? "text-green-600" : "text-red-600"}`}>
-            {correct ? "Correct!" : "Incorrect."}
-          </div>
-        )}
-        <button
-          className="btn btn-primary mt-4"
-          onClick={handleNext}
-          disabled={!showResult || isCompleted}
-        >
-          {current < lessons.length - 1 ? "Next Lesson" : "Finish"}
-        </button>
-      </div>
-    </div>
-  );
+	return (
+		<div className="min-h-screen flex flex-col items-center py-8 px-2 sm:px-6 lg:px-8 bg-gradient-to-br from-yellow-50 via-blue-50 to-purple-50">
+			<h1 className="text-3xl font-bold mb-6">Financial Literacy Lessons</h1>
+			{!selected ? (
+				<div className="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-4">
+					{lessons.map(lesson => (
+						<div
+							key={lesson.id}
+							className={`bg-white rounded-xl shadow p-4 flex flex-col gap-2 cursor-pointer border-2 ${completed.includes(lesson.id) ? 'border-green-400' : 'border-transparent'}`}
+							onClick={() => setSelected(lesson)}
+						>
+							<span className="font-semibold text-lg">{lesson.title}</span>
+							<span className="text-sm text-gray-500">XP: {lesson.xpReward}</span>
+							{completed.includes(lesson.id) && <span className="text-green-600 font-bold text-xs">Completed</span>}
+						</div>
+					))}
+				</div>
+			) : (
+				<div className="w-full max-w-lg bg-white rounded-xl shadow p-6 flex flex-col gap-4">
+					<button className="btn btn-sm btn-outline w-24 mb-2" onClick={() => { setSelected(null); setAnswer(""); }}>Back</button>
+					<h2 className="text-2xl font-bold mb-2">{selected.title}</h2>
+					<div className="mb-4 text-gray-700">{selected.content}</div>
+					<form onSubmit={handleQuiz} className="flex flex-col gap-2">
+						<div className="font-semibold mb-1">Quiz:</div>
+						<div className="mb-2">{selected.quiz[0].question}</div>
+						{selected.quiz[0].options.map(opt => (
+							<label key={opt} className="flex items-center gap-2">
+								<input
+									type="radio"
+									name="quiz"
+									value={opt}
+									checked={answer === opt}
+									onChange={() => setAnswer(opt)}
+									disabled={completed.includes(selected.id)}
+									className="radio"
+								/>
+								{opt}
+							</label>
+						))}
+						<button type="submit" className="btn btn-primary mt-2" disabled={submitting || completed.includes(selected.id)}>
+							{completed.includes(selected.id) ? "Completed" : submitting ? "Submitting..." : "Submit"}
+						</button>
+					</form>
+				</div>
+			)}
+		</div>
+	);
 }
