@@ -1,48 +1,38 @@
-"use client";
-import { usePathname } from "next/navigation";
-import Link from "next/link";
-import { Home, Target, Award, Users, Scroll } from "lucide-react"; // icons
 
-const navItems = [
-  { name: "Home", href: "/dashboard", icon: Home },
-  { name: "Goals", href: "/goals", icon: Target },
-  { name: "Badges", href: "/badges", icon: Award },
-  { name: "Challenges", href: "/challenges", icon: Users },
-  { name: "Quests", href: "/quests", icon: Scroll },
-];
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Home, Target, Trophy, Users, Zap } from 'lucide-react';
+import { clsx } from 'clsx';
 
-const Navigation = () => {
-    const pathname = usePathname();
+
+export default function Navigation() {
+  const pathname = usePathname();
+
+  const navItems = [
+    { href: '/', icon: Home, label: 'Home' },
+    { href: '/dashboard', icon: Zap, label: 'Dashboard' },
+    { href: '/goals', icon: Target, label: 'Goals' },
+    { href: '/badges', icon: Trophy, label: 'Badges' },
+    { href: '/challenges', icon: Users, label: 'Challenges' }
+  ];
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t-gray-400 shadow-md">
-      <ul className="flex justify-center gap-12 items-center py-2">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname === item.href;
-
-          return (
-            <li key={item.name}>
-              <Link
-                href={item.href}
-                className={`flex flex-col items-center text-[10px] transition-colors px-3 py-2 rounded-lg ${
-                  isActive
-                    ? "text-green-600 bg-green-100"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                <Icon
-                  className={`h-6 w-6 mb-1 ${
-                    isActive ? "text-green-500" : ""
-                  }`}
-                />
-                {item.name}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 sm:py-3">
+      <div className="flex justify-around items-center max-w-md mx-auto">
+        {navItems.map(({ href, icon: Icon, label }) => (
+          <Link key={href} href={href}>
+            <div className={clsx(
+              'flex flex-col items-center gap-1 p-2 rounded-lg transition-colors',
+              pathname === href 
+                ? 'text-blue-600 bg-blue-50' 
+                : 'text-gray-500 hover:text-gray-700'
+            )}>
+              <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
+              <span className="text-xs font-medium">{label}</span>
+            </div>
+          </Link>
+        ))}
+      </div>
     </nav>
-  )
+  );
 }
-
-export default Navigation
