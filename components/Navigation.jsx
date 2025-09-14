@@ -1,7 +1,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Target, Trophy, Users, Zap } from 'lucide-react';
+import { Home, Target, Users, Zap, BookOpen, ListOrdered } from 'lucide-react';
 import { clsx } from 'clsx';
 
 
@@ -12,8 +12,9 @@ export default function Navigation() {
     { href: '/', icon: Home, label: 'Home' },
     { href: '/dashboard', icon: Zap, label: 'Dashboard' },
     { href: '/goals', icon: Target, label: 'Goals' },
-    { href: '/badges', icon: Trophy, label: 'Badges' },
-    { href: '/challenges', icon: Users, label: 'Challenges' }
+    { href: '/leaderboard', icon: ListOrdered, label: 'Leaderboard' },
+    { href: '/challenges', icon: Users, label: 'Challenges' },
+    { href: '/lessons', icon: BookOpen, label: 'Lessons' },
   ];
 
   return (

@@ -2,8 +2,8 @@
 
 
 import React, { useState, useEffect } from 'react';
-import { withAuth } from '@/components/AuthProvider';
-import { useUser } from '@/components/UserProvider';
+// import { withAuth } from '@/components/AuthProvider';
+// import { useUser } from '@/components/UserProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Flame, Trophy, Users, Target, Sparkles } from 'lucide-react';
 import Confetti from 'react-confetti';
@@ -13,44 +13,48 @@ import { collection, query, where, getDocs, orderBy, limit } from 'firebase/fire
 
 
 const DashboardPage = () => {
-  const { user, profile, loading } = useUser();
-  const [goals, setGoals] = useState([]);
+  // Demo: Remove user/profile dependencies
+  const [goals, setGoals] = useState([
+    { id: 'demo1', currentAmount: 40, targetAmount: 100, name: 'Demo Goal' }
+  ]);
   const [savings, setSavings] = useState([]);
   const [showBadge, setShowBadge] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [leaderboard, setLeaderboard] = useState([]);
+  const [leaderboard, setLeaderboard] = useState([
+    { uid: '1', displayName: 'Demo User', xp: 100, avatar: '/images/hero-chest.jpeg', email: 'demo@example.com' }
+  ]);
+  const loading = false;
+  const profile = { displayName: 'Adventurer', streak: 0, badges: [] };
 
   // Fetch user's goals
-  useEffect(() => {
-    if (!user) return;
-    const fetchGoals = async () => {
-      const q = query(collection(db, 'savingsGoals'), where('uid', '==', user.uid));
-      const snap = await getDocs(q);
-      setGoals(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    };
-    fetchGoals();
-  }, [user]);
-
-  // Fetch user's savings
-  useEffect(() => {
-    if (!user) return;
-    const fetchSavings = async () => {
-      const q = query(collection(db, 'savings'), where('uid', '==', user.uid));
-      const snap = await getDocs(q);
-      setSavings(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    };
-    fetchSavings();
-  }, [user]);
-
-  // Fetch leaderboard (top users by XP)
-  useEffect(() => {
-    const fetchLeaderboard = async () => {
-      const q = query(collection(db, 'users'), orderBy('xp', 'desc'), limit(10));
-      const snap = await getDocs(q);
-      setLeaderboard(snap.docs.map(doc => doc.data()));
-    };
-    fetchLeaderboard();
-  }, []);
+  // useEffect(() => {
+  //   if (!user) return;
+  //   const fetchGoals = async () => {
+  //     const q = query(collection(db, 'savingsGoals'), where('uid', '==', user.uid));
+  //     const snap = await getDocs(q);
+  //     setGoals(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+  //   };
+  //   fetchGoals();
+  // }, [user]);
+  //
+  // useEffect(() => {
+  //   if (!user) return;
+  //   const fetchSavings = async () => {
+  //     const q = query(collection(db, 'savings'), where('uid', '==', user.uid));
+  //     const snap = await getDocs(q);
+  //     setSavings(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+  //   };
+  //   fetchSavings();
+  // }, [user]);
+  //
+  // useEffect(() => {
+  //   const fetchLeaderboard = async () => {
+  //     const q = query(collection(db, 'users'), orderBy('xp', 'desc'), limit(10));
+  //     const snap = await getDocs(q);
+  //     setLeaderboard(snap.docs.map(doc => doc.data()));
+  //   };
+  //   fetchLeaderboard();
+  // }, []);
 
   // Calculate progress for first goal (for demo)
   const mainGoal = goals[0];
@@ -253,14 +257,14 @@ const DashboardPage = () => {
         >
           {leaderboard.map((user, i) => (
             <motion.div
-              key={user.name}
+              key={user.uid || user.email || i}
               className={`flex items-center gap-4 bg-gray-50 rounded-xl px-4 py-3 shadow-sm ${i === 0 ? 'border-2 border-blue-400' : ''}`}
               variants={{ hidden: { opacity: 0, x: 40 }, visible: { opacity: 1, x: 0 } }}
               whileHover={{ scale: 1.03, boxShadow: '0 4px 16px 0 rgba(59,130,246,0.10)' }}
             >
-              <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full border-2 border-white shadow" />
-              <span className="font-semibold flex-1">{user.name}</span>
-              <span className="text-blue-600 font-bold">{user.score} XP</span>
+              <img src={user.avatar || '/images/hero-chest.jpeg'} alt={user.displayName || user.email || 'User'} className="w-10 h-10 rounded-full border-2 border-white shadow" />
+              <span className="font-semibold flex-1">{user.displayName || user.email || 'User'}</span>
+              <span className="text-blue-600 font-bold">{user.xp || 0} XP</span>
             </motion.div>
           ))}
         </motion.div>
@@ -313,4 +317,4 @@ const DashboardPage = () => {
   );
 };
 
-export default withAuth(DashboardPage);
+export default DashboardPage;
