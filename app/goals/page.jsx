@@ -81,24 +81,89 @@ export default function GoalsPage() {
       <div className="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-4">
         {goals.length === 0 && <div className="col-span-2 text-center text-gray-400">No goals yet. Create one!</div>}
         {goals.map(goal => (
-          <div key={goal.id} className="bg-white rounded-xl shadow p-4 flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-lg">{goal.title}</span>
-              <span className="text-sm text-gray-500">Target: R{goal.targetAmount}</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
-              <div
-                className="bg-gradient-to-r from-green-400 to-blue-500 h-4 rounded-full transition-all"
-                style={{ width: `${Math.round((goal.currentAmount / goal.targetAmount) * 100)}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-sm mt-1">
-              <span>Saved: R{goal.currentAmount}</span>
-              <span>{Math.round((goal.currentAmount / goal.targetAmount) * 100)}%</span>
-            </div>
-          </div>
+          <GoalCard
+            key={goal.id}
+            goal={goal}
+            user={user}
+            refreshGoals={async () => {
+              const q = query(collection(db, "savingsGoals"), where("uid", "==", user.uid), orderBy("createdAt", "desc"));
+              const snap = await getDocs(q);
+              setGoals(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))); 
+            }}
+          />
         ))}
       </div>
     </div>
   );
+// End of file
+
+// GoalCard component for logging savings
+function GoalCard({ goal, user, refreshGoals }) {
+  const [amount, setAmount] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const handleLogSave = async (e) => {
+    e.preventDefault();
+    if (!amount || isNaN(amount) || Number(amount) <= 0) return;
+    setSaving(true);
+    try {
+      // Add savings entry
+      await addDoc(collection(db, "savings"), {
+        uid: user.uid,
+        goalId: goal.id,
+        amount: Number(amount),
+        date: new Date(),
+      });
+      // Update goal's currentAmount (simulate serverless function or API route)
+      await fetch("/api/logSave", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ goalId: goal.id, amount: Number(amount) })
+      });
+      setAmount("");
+      toast.success("Saved R" + amount + "!");
+      refreshGoals();
+    } catch (err) {
+      toast.error("Failed to log savings");
+    }
+    setSaving(false);
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow p-4 flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <span className="font-semibold text-lg">{goal.title}</span>
+        <span className="text-sm text-gray-500">Target: R{goal.targetAmount}</span>
+      </div>
+      <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+        <div
+          className="bg-gradient-to-r from-green-400 to-blue-500 h-4 rounded-full transition-all"
+          style={{ width: `${Math.round((goal.currentAmount / goal.targetAmount) * 100)}%` }}
+        />
+      </div>
+      <div className="flex justify-between text-sm mt-1">
+        <span>Saved: R{goal.currentAmount}</span>
+        <span>{Math.round((goal.currentAmount / goal.targetAmount) * 100)}%</span>
+      </div>
+      <form onSubmit={handleLogSave} className="flex gap-2 mt-2">
+        <input
+          type="number"
+          min="1"
+          placeholder="Amount"
+          className="input input-bordered flex-1"
+          value={amount}
+          onChange={e => setAmount(e.target.value)}
+          required
+        />
+        <button
+          type="submit"
+          className="btn btn-success"
+          disabled={saving}
+        >
+          {saving ? "Saving..." : "Log Save"}
+        </button>
+      </form>
+    </div>
+  );
+}
 }
