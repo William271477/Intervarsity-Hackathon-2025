@@ -1,26 +1,64 @@
 "use client";
 
-import React, { useState } from 'react';
-import { withAuth, useAuth } from '@/components/AuthProvider';
+
+import React, { useState, useEffect } from 'react';
+import { withAuth } from '@/components/AuthProvider';
+import { useUser } from '@/components/UserProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Flame, Trophy, Users, Target, Sparkles } from 'lucide-react';
 import Confetti from 'react-confetti';
 import toast, { Toaster } from 'react-hot-toast';
+import { db } from '@/lib/firebaseConfig';
+import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 
-const leaderboard = [
-  { name: 'You', score: 1200, avatar: '/images/hero-chest.jpeg' },
-  { name: 'Alex', score: 1100, avatar: '/images/hero-chest.jpeg' },
-  { name: 'Sam', score: 900, avatar: '/images/hero-chest.jpeg' },
-];
 
 const DashboardPage = () => {
-  const { logout } = useAuth();
-  const [progress, setProgress] = useState(78); // percent
-  const [streak, setStreak] = useState(3);
+  const { user, profile, loading } = useUser();
+  const [goals, setGoals] = useState([]);
+  const [savings, setSavings] = useState([]);
   const [showBadge, setShowBadge] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [leaderboard, setLeaderboard] = useState([]);
 
-  // Simulate badge unlock
+  // Fetch user's goals
+  useEffect(() => {
+    if (!user) return;
+    const fetchGoals = async () => {
+      const q = query(collection(db, 'savingsGoals'), where('uid', '==', user.uid));
+      const snap = await getDocs(q);
+      setGoals(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    };
+    fetchGoals();
+  }, [user]);
+
+  // Fetch user's savings
+  useEffect(() => {
+    if (!user) return;
+    const fetchSavings = async () => {
+      const q = query(collection(db, 'savings'), where('uid', '==', user.uid));
+      const snap = await getDocs(q);
+      setSavings(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    };
+    fetchSavings();
+  }, [user]);
+
+  // Fetch leaderboard (top users by XP)
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      const q = query(collection(db, 'users'), orderBy('xp', 'desc'), limit(10));
+      const snap = await getDocs(q);
+      setLeaderboard(snap.docs.map(doc => doc.data()));
+    };
+    fetchLeaderboard();
+  }, []);
+
+  // Calculate progress for first goal (for demo)
+  const mainGoal = goals[0];
+  const progress = mainGoal ? Math.round((mainGoal.currentAmount / mainGoal.targetAmount) * 100) : 0;
+  const streak = profile?.streak || 0;
+  const badges = profile?.badges || [];
+
+  // Badge unlock simulation (replace with real logic as needed)
   const unlockBadge = () => {
     setShowBadge(true);
     setShowConfetti(true);
@@ -29,26 +67,25 @@ const DashboardPage = () => {
     setTimeout(() => setShowConfetti(false), 1800);
   };
 
-  // Simulate streak increment
-  const incrementStreak = () => {
-    setStreak(s => s + 1);
-    toast('🔥 Streak up!', { icon: '🔥' });
-  };
+
+  if (loading) return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-yellow-50 flex flex-col items-center py-8 px-2 sm:px-6 lg:px-8 relative overflow-x-hidden">
       <Toaster />
-      {showConfetti && <Confetti width={window.innerWidth} height={window.innerHeight} numberOfPieces={120} recycle={false} />} 
+      {showConfetti && typeof window !== 'undefined' && <Confetti width={window.innerWidth} height={window.innerHeight} numberOfPieces={120} recycle={false} />} 
       {/* Header */}
       <div className="w-full max-w-2xl flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
         <div className="flex flex-col items-start">
-          <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 to-green-400 bg-clip-text text-transparent mb-1">Welcome back 👋</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 to-green-400 bg-clip-text text-transparent mb-1">
+            Welcome back, {profile?.displayName || 'Adventurer'} 👋
+          </h1>
           <span className="text-gray-500 text-sm">Your adventure continues!</span>
         </div>
-        <button onClick={logout} className="bg-red-500 text-white px-4 py-2 rounded-lg shadow hover:bg-red-600 transition font-semibold">Logout</button>
+        {/* Logout button can be added here if needed */}
       </div>
 
-      {/* Progress Bar */}
+      {/* Progress Bar (first goal) */}
       <div className="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-6 mb-8 flex flex-col gap-4">
         <div className="flex items-center justify-between mb-2">
           <span className="font-semibold text-lg flex items-center gap-2"><Target className="w-5 h-5 text-green-500" />Goal Progress</span>
@@ -71,14 +108,30 @@ const DashboardPage = () => {
             />
           )}
         </div>
-        <button onClick={() => setProgress(p => Math.min(100, p + 10))} className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition">Log Save</button>
+        {/* Log Save button (for demo, just increments currentAmount) */}
+        {mainGoal && (
+          <button
+            onClick={async () => {
+              // Add a new savings entry and update goal
+              const newAmount = Math.min(mainGoal.currentAmount + 10, mainGoal.targetAmount);
+              await fetch('/api/logSave', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ goalId: mainGoal.id, amount: 10 })
+              });
+              toast.success('Saved R10!');
+            }}
+            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
+          >
+            Log Save
+          </button>
+        )}
       </div>
 
       {/* Streak Counter */}
       <motion.div
         className="flex items-center gap-2 bg-white rounded-full px-4 py-2 shadow-lg mb-8 cursor-pointer select-none"
         whileTap={{ scale: 1.12 }}
-        onClick={incrementStreak}
         animate={{ scale: [1, 1.15, 1] }}
         transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
       >
@@ -88,21 +141,73 @@ const DashboardPage = () => {
 
       {/* Badges */}
       <div className="w-full max-w-2xl grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+        {badges.length === 0 && (
+          <div className="col-span-3 text-center text-gray-400">No badges yet. Start saving!</div>
+        )}
+        {badges.map((badge, i) => (
+          <motion.div
+            key={badge}
+            className="bg-white rounded-2xl shadow-md flex flex-col items-center justify-center p-4"
+            whileTap={{ scale: 0.95, rotate: 8 }}
+          >
+            <Trophy className="w-8 h-8 text-yellow-400 mb-2 animate-bounce" />
+            <span className="font-semibold">{badge}</span>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Badge Modal */}
+      <AnimatePresence>
+        {showBadge && (
+          <motion.div
+            className="fixed inset-0 flex items-center justify-center z-50 bg-black/30"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-white rounded-2xl shadow-2xl p-8 flex flex-col items-center"
+              initial={{ scale: 0.7, rotate: -10 }}
+              animate={{ scale: 1, rotate: 0 }}
+              exit={{ scale: 0.7, rotate: 10 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            >
+              <Sparkles className="w-10 h-10 text-yellow-400 mb-2 animate-pulse" />
+              <Trophy className="w-16 h-16 text-yellow-400 mb-4 animate-bounce" />
+              <span className="font-bold text-lg mb-2">Badge Unlocked!</span>
+              <span className="text-gray-500 mb-2">First Save</span>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Leaderboard */}
+      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-6 mb-8">
+        <div className="flex items-center gap-2 mb-4">
+          <Users className="w-6 h-6 text-purple-600" />
+          <span className="font-semibold text-lg">Leaderboard</span>
+        </div>
         <motion.div
-          className="bg-white rounded-2xl shadow-md flex flex-col items-center justify-center p-4 cursor-pointer hover:scale-105 transition"
-          whileTap={{ scale: 0.95, rotate: 8 }}
-          onClick={unlockBadge}
+          className="flex flex-col gap-3"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: {},
+            visible: { transition: { staggerChildren: 0.18 } }
+          }}
         >
-          <Trophy className="w-8 h-8 text-yellow-400 mb-2 animate-bounce" />
-          <span className="font-semibold">First Save</span>
-        </motion.div>
-        <motion.div className="bg-white rounded-2xl shadow-md flex flex-col items-center justify-center p-4 opacity-60">
-          <Trophy className="w-8 h-8 text-purple-400 mb-2" />
-          <span className="font-semibold">Goal Complete</span>
-        </motion.div>
-        <motion.div className="bg-white rounded-2xl shadow-md flex flex-col items-center justify-center p-4 opacity-60">
-          <Trophy className="w-8 h-8 text-green-400 mb-2" />
-          <span className="font-semibold">3 Day Streak</span>
+          {leaderboard.map((user, i) => (
+            <motion.div
+              key={user.uid}
+              className={`flex items-center gap-4 bg-gray-50 rounded-xl px-4 py-3 shadow-sm ${i === 0 ? 'border-2 border-blue-400' : ''}`}
+              variants={{ hidden: { opacity: 0, x: 40 }, visible: { opacity: 1, x: 0 } }}
+              whileHover={{ scale: 1.03, boxShadow: '0 4px 16px 0 rgba(59,130,246,0.10)' }}
+            >
+              <img src={user.avatar || '/images/hero-chest.jpeg'} alt={user.displayName || user.email} className="w-10 h-10 rounded-full border-2 border-white shadow" />
+              <span className="font-semibold flex-1">{user.displayName || user.email}</span>
+              <span className="text-blue-600 font-bold">{user.xp} XP</span>
+            </motion.div>
+          ))}
         </motion.div>
       </div>
 
